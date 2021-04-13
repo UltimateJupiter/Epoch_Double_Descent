@@ -34,7 +34,7 @@ class FakeDL():
 
 def log(info, print_log=True):
     if print_log:
-        print("[{}]  {}".format(datetime.datetime.now(), info))
+        print("[{}]  {}".format(datetime.datetime.now(), info), flush=True)
 
 def timer(st, info='', timer_on=True):
     if timer_on:

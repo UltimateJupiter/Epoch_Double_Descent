@@ -4,7 +4,7 @@ from torchvision.datasets import CIFAR10, CIFAR100
 from torch.utils.data import DataLoader, random_split
 from .ondevdl import OnDeviceDataLoader
 
-def get_cifar_10(batch_size, ondev=True, ds_crop_train=1, ds_crop_test=1):
+def get_cifar_10(batch_size, ondev=True, ds_crop_train=1, ds_crop_test=1, device='cpu'):
 
     rgb_normalized_transform = transforms.Compose([
                 transforms.ToTensor(),
@@ -18,8 +18,8 @@ def get_cifar_10(batch_size, ondev=True, ds_crop_train=1, ds_crop_test=1):
     ds_test = crop_ds(ds_test, ds_crop=ds_crop_test)
     
     DL = OnDeviceDataLoader if ondev else DataLoader
-    train_dl = DL(ds_train, batch_size, shuffle=True)
-    test_dl = DL(ds_test, batch_size, shuffle=True)
+    train_dl = DL(ds_train, batch_size, shuffle=True, device=device)
+    test_dl = DL(ds_test, batch_size, shuffle=True, device=device)
 
     return train_dl, test_dl, [ds_train, ds_test]
 
