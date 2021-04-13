@@ -55,9 +55,3 @@ def VGG16_nobn():
 
 def VGG19_nobn():
     return VGG_nobn('VGG19')
-
-def test():
-    net = VGG_nobn('VGG11')
-    x = torch.randn(2,3,32,32) # pylint: disable=no-member
-    y = net(x)
-    print(y.size())

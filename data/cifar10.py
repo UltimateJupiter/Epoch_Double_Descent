@@ -1,9 +1,10 @@
 import torch
 import torchvision.transforms as transforms
 from torchvision.datasets import CIFAR10, CIFAR100
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
+from .ondevdl import OnDeviceDataLoader
 
-def get_cifar_10(batch_size):
+def get_cifar_10(batch_size, ondev=True, ds_crop_train=1, ds_crop_test=1):
 
     rgb_normalized_transform = transforms.Compose([
                 transforms.ToTensor(),
@@ -12,7 +13,21 @@ def get_cifar_10(batch_size):
 
     ds_train = CIFAR10(root='./data/cifar10', train=True, download=True, transform=rgb_normalized_transform)
     ds_test = CIFAR10(root='./data/cifar10', train=False, download=True, transform=rgb_normalized_transform)
-    train_dl = DataLoader(ds_train, batch_size, shuffle=True)
-    test_dl = DataLoader(ds_test, batch_size, shuffle=True)
+    
+    ds_train = crop_ds(ds_train, ds_crop=ds_crop_train)
+    ds_test = crop_ds(ds_test, ds_crop=ds_crop_test)
+    
+    DL = OnDeviceDataLoader if ondev else DataLoader
+    train_dl = DL(ds_train, batch_size, shuffle=True)
+    test_dl = DL(ds_test, batch_size, shuffle=True)
 
     return train_dl, test_dl, [ds_train, ds_test]
+
+def crop_ds(ds, ds_crop):
+
+    assert ds_crop <= 1
+    ind = int(len(ds) * ds_crop)
+    remain = len(ds) - ind
+
+    d1, d2 = random_split(ds, [ind, remain])
+    return d1

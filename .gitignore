@@ -33,3 +33,4 @@ Thumbs.db
 
 cifar-10-batches-py/
 data/cifar10/
+.vscode/
