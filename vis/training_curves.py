@@ -23,7 +23,7 @@ def plot_training_traj(train_traj, test_traj, pic_name, moving_average=True, log
         plt.plot(train_x, s_train_losses, color='blue')
     else:
         plt.plot(train_x, train_losses, label='train', color='blue')
-    plt.plot(test_x, test_risks, label='test', color='red')
+    plt.plot(test_x, test_losses, label='test', color='red')
     plt.legend()
     plt.xlabel('Steps')
     # plt.ylim([min(test_losses) - 1, max(test_losses) + 1])
