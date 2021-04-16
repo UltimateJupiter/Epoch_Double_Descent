@@ -3,23 +3,21 @@ from models.utils import init_network
 from models import *
 from data import *
 from measure import *
+from vis import *
 
 import torch
 import random
 import numpy as np
 
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+mpl.use("Agg")
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 # Default configs
 
-feat_dim = 25
-out_dim = 1
-
-hidden_dim = 250
-n_samples = 100
-n_epoch = 5
+n_epoch = 100
 seed = 0
 
 if seed is not None:
@@ -27,17 +25,15 @@ if seed is not None:
     torch.manual_seed(seed)
     np.random.seed(seed)
 
-train_dl, test_dl, _ = get_cifar_10(batch_size=32, ondev=True)
+train_dl, test_dl, _ = None, None, None
+# train_dl, test_dl, _ = get_cifar_10(batch_size=32, ondev=True, device=device)
 
-test_record_freq = 25
-train_record_freq = 1
-verbose_freq = 1
+test_record_freq = 1200
+train_record_freq = 600
+verbose_freq = 10
 
 net = Conv4FC1().to(device)
-
 n_layers = len(net.layers)
-
-print("Model: {} #layers: {}".format(net.name, len(net.layers)))
 
 # Naive setting
 scales = np.array([1] * n_layers)
@@ -52,6 +48,7 @@ def test(dl, model):
     batch_risks = []
     with torch.no_grad():
         for (X_test, y_test) in iter(dl):
+            X_test, y_test = X_test.to(device), y_test.to(device)
             yt_pred = model(X_test)
             batch_risks.append(risk_fn(yt_pred, y_test).item())
             batch_losses.append(loss_fn(yt_pred, y_test).item())
@@ -78,6 +75,14 @@ def train():
         
         for (X_train, y_train) in iter(train_dl):
             
+            if steps % test_record_freq == 0:
+                test_loss, test_risk = test(test_dl, net)
+                test_risks.append(test_risk)
+                test_losses.append(test_loss)
+                test_x.append(steps)
+
+            X_train, y_train = X_train.to(device), y_train.to(device)
+            
             y_pred = net(X_train)
             loss = loss_fn(y_pred, y_train)
 
@@ -95,16 +100,10 @@ def train():
                 for i, layer in enumerate(net.layers):
                     for name, param in layer.named_parameters():
                         param.data -= lr[i] * param.grad
-            
-            if steps % test_record_freq == 0:
-                test_loss, test_risk = test(test_dl, net)
-                test_risks.append(test_risk)
-                test_losses.append(test_loss)
-                test_x.append(steps)
 
         if e % verbose_freq == 0:
-            verbose_arg = [e, train_losses[-1], train_risks[-1], test_losses[-1], test_risks[-1]]
-            print("Epoch{} | TrainLoss {:.4g} | TrainRisk {:.4g} | TestLoss {:.4g} | TestRisk {:.4g}".format(*verbose_arg))
+            verbose_arg = [e, steps, train_losses[-1], train_risks[-1], test_losses[-1], test_risks[-1]]
+            log("Epoch{} Step{} | TrainLoss {:.4g} | TrainRisk {:.4g} | TestLoss {:.4g} | TestRisk {:.4g}".format(*verbose_arg))
     
     info = []
     return [train_losses, train_risks, train_x], [test_losses, test_risks, test_x], info
@@ -112,25 +111,34 @@ def train():
 def main():
 
     # Modify setting here
-    [train_losses, train_risks, train_x], [test_losses, test_risks, test_x], info = train()
+    global lr 
+    lr = np.array([0.1, 0.1, 0.1, 0.1, 0.1])
+
+    global n_epoch
+    n_epoch = 2500
+
+    global train_dl, test_dl
+    train_dl, test_dl, _ = get_cifar_10(batch_size=128, ondev=True, device=device, noise_level=0.1)
+
+    exp_name = net.name + 'noise0.1_lr0.1_2500epoch_bt128' # modify the name for grid search
+    print(exp_name)
+
+    train_res = train()
+
+    train_traj, test_traj, info = train_res
+
+    log_name = './log/{}.pkl'.format(exp_name)
+    torch.save([train_res, exp_name], log_name)
+
+    plot_training_traj(train_traj, test_traj, exp_name)
+    plot_training_traj(train_traj, test_traj, exp_name, log_scale=True)
+
+def plot_log():
+    exp_name = net.name + '_100epoch' # modify the name for grid search
     
-    plt.subplot(121)
-    plt.title("loss")
-    plt.plot(train_x, train_losses, label='train')
-    plt.plot(test_x, test_risks, label='test')
-    plt.legend()
-    plt.ylim([min(test_losses) - 1, max(test_losses) + 1])
-    plt.xscale('log')
-
-    plt.subplot(122)
-    plt.title("risk")
-    plt.plot(train_x, train_risks, label='train')
-    plt.plot(test_x, test_risks, label='test')
-    plt.legend()
-    # plt.ylim([min(test_risks) - 1, max(test_risks) + 1])
-    plt.xscale('log')
-
-    pic_name = net.name + '_tmp' # modify the name for grid searc
-    plt.savefig("{}.jpg".format(pic_name))
+    log_name = './log/{}.pkl'.format(exp_name)
+    [train_traj, test_traj, info], exp_name = torch.load(log_name)
+    plot_training_traj(train_traj, test_traj, exp_name)
 
 main()
+# plot_log()

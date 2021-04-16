@@ -32,10 +32,7 @@ train_record_freq = 1
 verbose_freq = 1
 
 net = VGG11_nobn().to(device)
-
 n_layers = len(net.layers)
-
-print("Model: {} #layers: {}".format(net.name, len(net.layers)))
 
 # Naive setting
 scales = np.array([1] * n_layers)
@@ -113,12 +110,31 @@ def train():
 def main():
 
     # Modify setting here
+    global lr 
+    lr = np.array([0.05] * n_layers)
+
+    global n_epoch
+    n_epoch = 1000
+
+    exp_name = net.name + 'lr0.05_1000epoch' # modify the name for grid search
+    print(exp_name)
+
     train_res = train()
 
     train_traj, test_traj, info = train_res
-    exp_name = net.name + '_100epoch' # modify the name for grid search
-    torch.save([train_res, exp_name], './log/{}.pkl'.format(exp_name))
+
+    log_name = './log/{}.pkl'.format(exp_name)
+    torch.save([train_res, exp_name], log_name)
+
     plot_training_traj(train_traj, test_traj, exp_name)
     plot_training_traj(train_traj, test_traj, exp_name, log_scale=True)
+
+def plot_log():
+    exp_name = net.name + '_100epoch' # modify the name for grid search
     
+    log_name = './log/{}.pkl'.format(exp_name)
+    [train_traj, test_traj, info], exp_name = torch.load(log_name)
+    plot_training_traj(train_traj, test_traj, exp_name)
+
 main()
+# plot_log()

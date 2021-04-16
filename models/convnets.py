@@ -16,7 +16,7 @@ class Conv4FC1(nn.Module):
         self.classifier = self.make_layer(bn)
         
         self.layers = get_children(self)
-        self.name = 'Conv4FC1'
+        self.name = 'Conv4FC1' + '_bn{}'.format(int(bn))
 
     def make_layer(self, bn):
         num_planes = self.hid_ch
