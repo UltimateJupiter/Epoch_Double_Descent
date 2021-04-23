@@ -28,11 +28,11 @@ if seed is not None:
 train_dl, test_dl, _ = None, None, None
 # train_dl, test_dl, _ = get_cifar_10(batch_size=32, ondev=True, device=device)
 
-test_record_freq = 1200
-train_record_freq = 600
+test_record_freq = 32
+train_record_freq = 16
 verbose_freq = 10
 
-net = Conv4FC1().to(device)
+net = Conv4FC1(bn=True).to(device)
 n_layers = len(net.layers)
 
 # Naive setting
@@ -70,6 +70,9 @@ def train():
     steps = 0
 
     init_network(net, scales=scales)
+    # D, splitted_norms, slices, layer_names = get_jacobian_svd(train_dl, net, batchsize=1024, num_classes=10, device='cpu')
+    # plot_jac_svd(D, splitted_norms, slices, layer_names, 'test_conv5_bn_1024')
+    # exit()
     
     for e in range(n_epoch):
         
@@ -102,7 +105,7 @@ def train():
                         param.data -= lr[i] * param.grad
 
         if e % verbose_freq == 0:
-            verbose_arg = [e, steps, train_losses[-1], train_risks[-1], test_losses[-1], test_risks[-1]]
+            verbose_arg = [e, steps, np.mean(train_losses[-5:]), np.mean(train_risks[-5:]), np.mean(test_losses[-5:]), np.mean(test_risks[-5:])]
             log("Epoch{} Step{} | TrainLoss {:.4g} | TrainRisk {:.4g} | TestLoss {:.4g} | TestRisk {:.4g}".format(*verbose_arg))
     
     info = []
@@ -115,12 +118,12 @@ def main():
     lr = np.array([0.1, 0.1, 0.1, 0.1, 0.1])
 
     global n_epoch
-    n_epoch = 2500
+    n_epoch = 300
 
     global train_dl, test_dl
-    train_dl, test_dl, _ = get_cifar_10(batch_size=128, ondev=True, device=device, noise_level=0.1)
+    train_dl, test_dl, _ = get_cifar_10(batch_size=128, ondev=True, device=device, noise_level=0.023)
 
-    exp_name = net.name + 'noise0.1_lr0.1_2500epoch_bt128' # modify the name for grid search
+    exp_name = net.name + '_noise0.023_lr0.1_300epoch_bt128' # modify the name for grid search
     print(exp_name)
 
     train_res = train()

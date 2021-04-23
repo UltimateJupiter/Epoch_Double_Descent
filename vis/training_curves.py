@@ -13,7 +13,9 @@ def plot_training_traj(train_traj, test_traj, pic_name, moving_average=True, log
     [train_losses, train_risks, train_x], [test_losses, test_risks, test_x] = train_traj, test_traj
 
     s_train_losses = seq_moving_average(train_losses, max(10, len(train_losses) // 100))
-    s_train_risks = seq_moving_average(train_risks, max(10, len(train_risks) // 100))
+    s_train_risks = seq_moving_average(train_risks, max(5, len(train_risks) // 200))
+    s_test_losses = seq_moving_average(test_losses, max(10, len(test_losses) // 100))
+    s_test_risks = seq_moving_average(test_risks, max(5, len(test_risks) // 200))
 
     plt.figure(figsize=(10,5))
     plt.subplot(121)
@@ -23,7 +25,11 @@ def plot_training_traj(train_traj, test_traj, pic_name, moving_average=True, log
         plt.plot(train_x, s_train_losses, color='blue')
     else:
         plt.plot(train_x, train_losses, label='train', color='blue')
-    plt.plot(test_x, test_losses, label='test', color='red')
+    if moving_average:
+        plt.plot(test_x, test_losses, label='test', color='red', alpha=0.3)
+        plt.plot(test_x, s_test_losses, color='red')
+    else:
+        plt.plot(test_x, test_losses, label='test', color='red')
     plt.legend()
     plt.xlabel('Steps')
     # plt.ylim([min(test_losses) - 1, max(test_losses) + 1])
@@ -37,7 +43,11 @@ def plot_training_traj(train_traj, test_traj, pic_name, moving_average=True, log
         plt.plot(train_x, s_train_risks, color='blue')
     else:
         plt.plot(train_x, train_risks, label='train', color='blue')
-    plt.plot(test_x, test_risks, label='test', color='red')
+    if moving_average:
+        plt.plot(test_x, test_risks, label='test', color='red', alpha=0.3)
+        plt.plot(test_x, s_test_risks, color='red')
+    else:
+        plt.plot(test_x, test_risks, label='test', color='red')
     plt.legend()
     plt.xlabel('Steps')
     # plt.ylim([min(test_risks) - 1, max(test_risks) + 1])

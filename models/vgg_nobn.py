@@ -1,23 +1,25 @@
 '''VGG11/13/16/19 in Pytorch.'''
 import torch
 import torch.nn as nn
-from .utils import get_children
+from .utils import get_children, get_layer_names
 
 cfg = {
-    'VGG11': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
-    'VGG11N': [32, 'M', 64, 'M', 64, 64, 'M', 128, 128, 'M', 256, 256, 'M'],
-    'VGG11NN': [16, 'M', 32, 'M', 32, 32, 'M', 64, 64, 'M', 128, 128, 'M'],
-    'VGG16': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M'],
-    'VGG19': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 512, 512, 512, 512, 'M'],
+    'VGG11_nobn': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
+    'VGG11N_nobn': [32, 'M', 64, 'M', 64, 64, 'M', 128, 128, 'M', 256, 256, 'M'],
+    'VGG11NN_nobn': [16, 'M', 32, 'M', 32, 32, 'M', 64, 64, 'M', 128, 128, 'M'],
+    'VGG13_nobn': [64, 64, 'M', 128, 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
+    'VGG16_nobn': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512, 512, 'M', 512, 512, 512, 'M'],
+    'VGG19_nobn': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512, 512, 512, 'M', 512, 512, 512, 512, 'M'],
 }
 
 class VGG_nobn(nn.Module):
-    def __init__(self, vgg_name):
+    def __init__(self, vgg_name, n_classes=10):
         super(VGG_nobn, self).__init__()
         self.features = self._make_layers(cfg[vgg_name])
-        self.classifier = nn.Linear(cfg[vgg_name][-2], 100)
+        self.classifier = nn.Linear(cfg[vgg_name][-2], n_classes)
         self.layers = get_children(self)
         self.name = vgg_name
+        self.layer_names = get_layer_names(self)
 
     def forward(self, x):
         out = self.features(x)
@@ -39,19 +41,19 @@ class VGG_nobn(nn.Module):
         return nn.Sequential(*layers)
 
 def VGG11_nobn():
-    return VGG_nobn('VGG11')
+    return VGG_nobn('VGG11_nobn')
 
 def VGG11N_nobn():
-    return VGG_nobn('VGG11N')
+    return VGG_nobn('VGG11N_nobn')
 
 def VGG11NN_nobn():
-    return VGG_nobn('VGG11NN')
+    return VGG_nobn('VGG11NN_nobn')
 
 def VGG13_nobn():
-    return VGG_nobn('VGG13')
+    return VGG_nobn('VGG13_nobn')
 
 def VGG16_nobn():
-    return VGG_nobn('VGG16')
+    return VGG_nobn('VGG16_nobn')
 
 def VGG19_nobn():
-    return VGG_nobn('VGG19')
+    return VGG_nobn('VGG19_nobn')

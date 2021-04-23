@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .utils import get_children
+from .utils import get_children, get_layer_names
 
 class LeNet5(nn.Module):
     def __init__(self):
@@ -15,6 +15,7 @@ class LeNet5(nn.Module):
 
         self.layers = get_children(self)
         self.name = 'LeNet5'
+        self.layer_names = get_layer_names(self)
 
     def forward(self, x):
         out = F.relu(self.conv1(x))

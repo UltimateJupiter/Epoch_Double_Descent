@@ -25,11 +25,12 @@ if seed is not None:
     torch.manual_seed(seed)
     np.random.seed(seed)
 
-train_dl, test_dl, _ = get_cifar_10(batch_size=32, ondev=True, device=device)
+train_dl, test_dl, _ = None, None, None
+# train_dl, test_dl, _ = get_cifar_10(batch_size=32, ondev=True, device=device)
 
-test_record_freq = 500
-train_record_freq = 1
-verbose_freq = 1
+test_record_freq = 32
+train_record_freq = 8
+verbose_freq = 10
 
 net = VGG11_nobn().to(device)
 n_layers = len(net.layers)
@@ -69,6 +70,9 @@ def train():
     steps = 0
 
     init_network(net, scales=scales)
+    D, splitted_norms, slices, layer_names = get_jacobian_svd(train_dl, net, batchsize=64, num_classes=10, device='cpu')
+    plot_jac_svd(D, splitted_norms, slices, layer_names, 'svd_vgg_nobn_64')
+    exit()
     
     for e in range(n_epoch):
         
@@ -111,15 +115,20 @@ def main():
 
     # Modify setting here
     global lr 
-    lr = np.array([0.05] * n_layers)
+    lr = np.array([0.1] * n_layers)
+    lr[-1] = 0.01
 
     global n_epoch
-    n_epoch = 1000
+    n_epoch = 100
 
-    exp_name = net.name + 'lr0.05_1000epoch' # modify the name for grid search
+    global train_dl, test_dl
+    train_dl, test_dl, _ = get_cifar_10(batch_size=128, ondev=True, device=device, noise_level=0.2)
+
+    exp_name = net.name + '_noise0.2_lr0.1_fc0.01_100epoch' # modify the name for grid search
     print(exp_name)
 
     train_res = train()
+
 
     train_traj, test_traj, info = train_res
 

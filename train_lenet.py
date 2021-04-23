@@ -72,7 +72,9 @@ def train():
     steps = 0
 
     init_network(net, scales=scales)
-    
+    D, splitted_norms, slices, layer_names = get_jacobian_svd(train_dl, net, batchsize=256, num_classes=10)
+    plot_jac_svd(D, splitted_norms, slices, layer_names, 'test')
+    exit()
     for e in range(n_epoch):
         
         for (X_train, y_train) in iter(train_dl):

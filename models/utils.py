@@ -45,3 +45,20 @@ def get_children(model: torch.nn.Module):
             ret_children.append(child)
 
     return ret_children
+
+def get_layer_names(model):
+    layer_names = []
+
+    conv_ind = 1
+    fc_ind = 1
+
+    for layer in model.layers:
+        if isinstance(layer, (Conv1d, Conv2d)):
+            layer_names.append('Conv{}'.format(conv_ind))
+            conv_ind += 1
+        elif isinstance(layer, Linear):
+            layer_names.append('FC{}'.format(fc_ind))
+            fc_ind += 1
+    
+    return layer_names
+            

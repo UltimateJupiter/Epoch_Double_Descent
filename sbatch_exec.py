@@ -20,8 +20,8 @@ pre_set_config = {
     ],
     "train-l":[
         "90:00:00",
-        8,
-        64,
+        32,
+        128,
         1,
         "compsci-gpu"
     ],

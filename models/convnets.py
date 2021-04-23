@@ -1,5 +1,5 @@
 import torch.nn as nn
-from .utils import get_children
+from .utils import get_children, get_layer_names
 
 class Flatten(nn.Module):
     def forward(self, x): return x.view(x.size(0), x.size(1))
@@ -17,6 +17,8 @@ class Conv4FC1(nn.Module):
         
         self.layers = get_children(self)
         self.name = 'Conv4FC1' + '_bn{}'.format(int(bn))
+
+        self.layer_names = get_layer_names(self)
 
     def make_layer(self, bn):
         num_planes = self.hid_ch
