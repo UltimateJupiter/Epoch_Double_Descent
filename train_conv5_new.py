@@ -29,14 +29,12 @@ if seed is not None:
 train_dl, test_dl, _ = None, None, None
 # train_dl, test_dl, _ = get_cifar_10(batch_size=32, ondev=True, device=device)
 
-test_record_freq = 32
-# train_record_freq = 8
-train_record_freq = 128
+test_record_freq = 1200
+train_record_freq = 600
 verbose_freq = 10
 
-net = VGG11_nobn().to(device)
+net = Conv4FC1().to(device)
 n_layers = len(net.layers)
-print(net.layer_names)
 
 # Naive setting
 scales = np.array([1] * n_layers)
@@ -68,20 +66,18 @@ def train():
     test_risks = []
     train_risks = []
 
-    assert len(lr) == len(net.layers)
-
+    # weight_dic = {i : [] for i in range(len(net.layers))}
+    # indexes = [0, 3, 7, 11, 17]
+    indexes = [0, 2, 5, 8, 13]
+    # new_weights = {i : [] for i in range(len(net.layers))}
     weights_diff = {i : [0] for i in range(len(net.layers))}
     old_weights = {i : [] for i in range(len(net.layers))}
-    gamma = [0 for i in range(len(net.layers))]
-    lr_star = lr[0]
+
+    assert len(lr) == len(net.layers)
 
     steps = 0
 
     init_network(net, scales=scales)
-    # D, splitted_norms, slices, layer_names = get_jacobian_svd(train_dl, net, batchsize=64, num_classes=10, device='cpu')
-    # plot_jac_svd(D, splitted_norms, slices, layer_names, 'svd_vgg_nobn_64')
-    # print(layer_names)
-    # exit()
     
     for e in range(n_epoch):
         
@@ -103,25 +99,23 @@ def train():
                 train_losses.append(loss.item())
                 train_risks.append(risk.item())
                 train_x.append(steps)
-
+                # for i, layer in enumerate(net.layers):
+                #     for name, param in layer.named_parameters():
+                #         norms = [LA.norm(kernel) for kernel in param.data.cpu().detach().numpy()]
+                #         weight_dic[i].append(np.mean(norms))
+                #         print("layer" + str(i) + " " + str(np.mean(norms)))
+                state_dict = net.state_dict()
                 for i, layer in enumerate(net.layers):
-                    print("layer"+ str(i))
-                    for name, param in layer.named_parameters():
-                        if name == "weight":
-                            # print(param.data)
-                            new_weight = param.data.cpu().detach().numpy().flatten()
-                            if len(old_weights[i]) != 0:
-                                diff = LA.norm(new_weight - old_weights[i])/np.sqrt(len(new_weight))
-                                weights_diff[i].append(diff)
-                                print(diff, flush=True)
-                                
-                                gamma[i] = lr[i] / diff
-                            old_weights[i] = new_weight
+                    key = 'classifier.' + str(indexes[i]) + '.weight'
+                    new_weight = state_dict[key].cpu().detach().numpy().flatten()
+                    # weights[i].append(new_weights)
+                    if len(old_weights[i]) != 0:
+                        # diffs = [LA.norm(new_weight[j] - old_weights[i][j]) for j in range(len(new_weight))]
+                        diff = LA.norm(new_weight - old_weights[i])/np.sqrt(len(new_weight))
+                        weights_diff[i].append(diff)
+                        print(diff, flush=True)
+                    old_weights[i] = new_weight
 
-                s = sum(gamma)
-                if s != 0:
-                    for i, layer in enumerate(net.layers):
-                        lr[i] = lr_star * gamma[i] / s
 
             net.zero_grad()
             loss.backward()
@@ -139,24 +133,23 @@ def train():
     info = []
     return [train_losses, train_risks, train_x], [test_losses, test_risks, test_x], [weights_diff, train_x], info
 
+
 def main():
 
     # Modify setting here
     global lr 
-    lr = np.array([0.1] * n_layers)
-    # lr[-1] = 0.01
+    lr = np.array([0.1, 0.1, 0.1, 0.1, 0.1])
 
     global n_epoch
-    n_epoch = 150
+    n_epoch = 200
 
     global train_dl, test_dl
-    train_dl, test_dl, _ = get_cifar_10(batch_size=128, ondev=True, device=device, noise_level=0.2)
+    train_dl, test_dl, _ = get_cifar_10(batch_size=128, ondev=True, device=device, noise_level=0.1)
 
-    exp_name = net.name + '_noise0.2_lr0.1_150epoch_o2' # modify the name for grid search
+    exp_name = net.name + 'noise0.1_lr0.1_200epoch_bt128_r1' # modify the name for grid search
     print(exp_name)
 
     train_res = train()
-
 
     train_traj, test_traj, weight_traj, info = train_res
 
@@ -165,11 +158,11 @@ def main():
 
     plot_training_traj(train_traj, test_traj, exp_name)
     plot_training_traj(train_traj, test_traj, exp_name, log_scale=True)
+    plot_weight_traj(weight_traj, exp_name)
     plot_weight_traj2(weight_traj, exp_name)
-    plot_weight_traj2(weight_traj, exp_name, log_scale=True)
 
 def plot_log():
-    exp_name = net.name + '_100epoch' # modify the name for grid search
+    exp_name = net.name + '_log1' # modify the name for grid search
     
     log_name = './log/{}.pkl'.format(exp_name)
     [train_traj, test_traj, info], exp_name = torch.load(log_name)

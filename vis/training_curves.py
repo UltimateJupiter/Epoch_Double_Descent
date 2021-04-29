@@ -60,4 +60,42 @@ def plot_training_traj(train_traj, test_traj, pic_name, moving_average=True, log
     plt.savefig("./figs/{}_{}.jpg".format(pic_name, fig_desc))
 
     
+# def plot_weight_traj(weight_traj, pic_name):
+#     [weights_diff, train_x] = weight_traj
+#     plt.figure(figsize=(10,5))
+#     plt.title("weights")
+#     layers = ['Conv1', 'Conv2', 'Conv3', 'Conv4', 'Conv5', 'Conv6', 'Conv7', 'Conv8', 'FC1']
+#     for i in range(len(weights_diff)):
+#         plt.scatter(train_x, weights_diff[i], label=layers[i])
+#     plt.legend()
+#     plt.xlabel('Steps')
+
+#     fig_desc = 'weights'
+#     plt.savefig("./figs/{}_{}.jpg".format(pic_name, fig_desc))
+
+
+def plot_weight_traj2(weight_traj, pic_name, log_scale = False):
+    [weights_diff, train_x] = weight_traj
+    plt.figure(figsize=(10,5))
+    plt.subplot(121)
+    plt.title("plot")
+    layers = ['Conv1', 'Conv2', 'Conv3', 'Conv4', 'Conv5', 'Conv6', 'Conv7', 'Conv8', 'FC1']
+    for i in range(len(weights_diff)):
+        plt.plot(train_x[2:], weights_diff[i][2:], label=layers[i])
+    plt.legend()
+    plt.xlabel('Steps')
+    if log_scale:
+        plt.xscale('log')
+
+    plt.subplot(122)
+    plt.title("scatter")
+    layers = ['Conv1', 'Conv2', 'Conv3', 'Conv4', 'Conv5', 'Conv6', 'Conv7', 'Conv8', 'FC1']
+    for i in range(len(weights_diff)):
+        plt.scatter(train_x[2:], weights_diff[i][2:], label=layers[i])
+    plt.legend()
+    plt.xlabel('Steps')
+    if log_scale:
+        plt.xscale('log')
+    fig_desc = 'weights2_' + 'log{}'.format(int(log_scale))
+    plt.savefig("./figs/{}_{}.jpg".format(pic_name, fig_desc))
     
