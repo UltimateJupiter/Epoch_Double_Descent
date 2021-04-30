@@ -19,7 +19,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 # Default configs
 
 n_epoch = 100
-seed = 0
+seed = 1
 
 if seed is not None:
     random.seed(seed)
@@ -73,7 +73,10 @@ def train():
     weights_diff = {i : [0] for i in range(len(net.layers))}
     old_weights = {i : [] for i in range(len(net.layers))}
     gamma = [0 for i in range(len(net.layers))]
+    n_param = [0 for i in range(len(net.layers))]
     lr_star = lr[0]
+
+    eta = {i : [0] for i in range(len(net.layers))}
 
     steps = 0
 
@@ -82,6 +85,12 @@ def train():
     # plot_jac_svd(D, splitted_norms, slices, layer_names, 'svd_vgg_nobn_64')
     # print(layer_names)
     # exit()
+
+    for i, layer in enumerate(net.layers):
+        for name, param in layer.named_parameters():
+            if name == "weight":
+                n_param[i] = len(param.data.cpu().detach().numpy().flatten())
+                print(n_param[i])
     
     for e in range(n_epoch):
         
@@ -116,12 +125,27 @@ def train():
                                 print(diff, flush=True)
                                 
                                 gamma[i] = lr[i] / diff
-                            old_weights[i] = new_weight
 
+                            old_weights[i] = new_weight
+                            
                 s = sum(gamma)
+                maxg = max(gamma)
+                weighted = [n_param[i] * gamma[i] for i in range(len(gamma))]
+                s_weighted = sum(weighted)
+
                 if s != 0:
                     for i, layer in enumerate(net.layers):
-                        lr[i] = lr_star * gamma[i] / s
+                        # method 2
+                        # lr[i] = lr_star * gamma[i] / s
+
+                        # method 3
+                        # lr[i] = lr_star * gamma[i] / maxg
+
+                        # method 1
+                        lr[i] = lr_star * n_param[i] * gamma[i] / s_weighted
+
+                        eta[i].append(lr[i])
+
 
             net.zero_grad()
             loss.backward()
@@ -137,13 +161,13 @@ def train():
             log("Epoch{} Step{} | TrainLoss {:.4g} | TrainRisk {:.4g} | TestLoss {:.4g} | TestRisk {:.4g}".format(*verbose_arg))
     
     info = []
-    return [train_losses, train_risks, train_x], [test_losses, test_risks, test_x], [weights_diff, train_x], info
+    return [train_losses, train_risks, train_x], [test_losses, test_risks, test_x], [weights_diff, train_x], [eta, train_x], info
 
 def main():
 
     # Modify setting here
     global lr 
-    lr = np.array([0.1] * n_layers)
+    lr = np.array([0.05] * n_layers)
     # lr[-1] = 0.01
 
     global n_epoch
@@ -152,13 +176,13 @@ def main():
     global train_dl, test_dl
     train_dl, test_dl, _ = get_cifar_10(batch_size=128, ondev=True, device=device, noise_level=0.2)
 
-    exp_name = net.name + '_noise0.2_lr0.1_150epoch_o2' # modify the name for grid search
+    exp_name = net.name + '_noise0.2_lr0.05_150epoch_r1_m1_wlr' # modify the name for grid search
     print(exp_name)
 
     train_res = train()
 
 
-    train_traj, test_traj, weight_traj, info = train_res
+    train_traj, test_traj, weight_traj, lr_traj, info = train_res
 
     log_name = './log/{}.pkl'.format(exp_name)
     torch.save([train_res, exp_name], log_name)
@@ -166,7 +190,7 @@ def main():
     plot_training_traj(train_traj, test_traj, exp_name)
     plot_training_traj(train_traj, test_traj, exp_name, log_scale=True)
     plot_weight_traj2(weight_traj, exp_name)
-    plot_weight_traj2(weight_traj, exp_name, log_scale=True)
+    plot_lr_traj(lr_traj, exp_name)
 
 def plot_log():
     exp_name = net.name + '_100epoch' # modify the name for grid search

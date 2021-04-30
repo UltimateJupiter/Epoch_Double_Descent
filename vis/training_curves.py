@@ -57,7 +57,9 @@ def plot_training_traj(train_traj, test_traj, pic_name, moving_average=True, log
     
     fig_desc = 'log{}'.format(int(log_scale))
 
-    plt.savefig("./figs/{}_{}.jpg".format(pic_name, fig_desc))
+    plt.savefig("./figs/{}_{}.pdf".format(pic_name, fig_desc))
+
+    print("https://users.cs.duke.edu/~rw186/figs/{}_{}.pdf".format(pic_name, fig_desc))
 
     
 # def plot_weight_traj(weight_traj, pic_name):
@@ -74,28 +76,52 @@ def plot_training_traj(train_traj, test_traj, pic_name, moving_average=True, log
 #     plt.savefig("./figs/{}_{}.jpg".format(pic_name, fig_desc))
 
 
-def plot_weight_traj2(weight_traj, pic_name, log_scale = False):
+def plot_weight_traj2(weight_traj, pic_name):
     [weights_diff, train_x] = weight_traj
     plt.figure(figsize=(10,5))
     plt.subplot(121)
-    plt.title("plot")
-    layers = ['Conv1', 'Conv2', 'Conv3', 'Conv4', 'Conv5', 'Conv6', 'Conv7', 'Conv8', 'FC1']
-    for i in range(len(weights_diff)):
-        plt.plot(train_x[2:], weights_diff[i][2:], label=layers[i])
-    plt.legend()
-    plt.xlabel('Steps')
-    if log_scale:
-        plt.xscale('log')
-
-    plt.subplot(122)
-    plt.title("scatter")
+    plt.title("not logged")
     layers = ['Conv1', 'Conv2', 'Conv3', 'Conv4', 'Conv5', 'Conv6', 'Conv7', 'Conv8', 'FC1']
     for i in range(len(weights_diff)):
         plt.scatter(train_x[2:], weights_diff[i][2:], label=layers[i])
     plt.legend()
     plt.xlabel('Steps')
-    if log_scale:
-        plt.xscale('log')
-    fig_desc = 'weights2_' + 'log{}'.format(int(log_scale))
-    plt.savefig("./figs/{}_{}.jpg".format(pic_name, fig_desc))
+
+    plt.subplot(122)
+    plt.title("logged")
+    layers = ['Conv1', 'Conv2', 'Conv3', 'Conv4', 'Conv5', 'Conv6', 'Conv7', 'Conv8', 'FC1']
+    for i in range(len(weights_diff)):
+        plt.scatter(train_x[2:], weights_diff[i][2:], label=layers[i])
+    plt.legend()
+    plt.xlabel('Steps')
+    plt.xscale('log')
+
+    fig_desc = 'weights2'
+    plt.savefig("./figs/{}_{}.pdf".format(pic_name, fig_desc))
+    print("https://users.cs.duke.edu/~rw186/figs/{}_{}.pdf".format(pic_name, fig_desc))
+
+
+def plot_lr_traj(lr_traj, pic_name):
+    [eta, train_x] = lr_traj
+    plt.figure(figsize=(10,5))
+    plt.subplot(121)
+    plt.title("not logged")
+    layers = ['Conv1', 'Conv2', 'Conv3', 'Conv4', 'Conv5', 'Conv6', 'Conv7', 'Conv8', 'FC1']
+    for i in range(len(eta)):
+        plt.scatter(train_x[2:], eta[i][2:], label=layers[i])
+    plt.legend()
+    plt.xlabel('Steps')
+
+    plt.subplot(122)
+    plt.title("logged")
+    layers = ['Conv1', 'Conv2', 'Conv3', 'Conv4', 'Conv5', 'Conv6', 'Conv7', 'Conv8', 'FC1']
+    for i in range(len(eta)):
+        plt.scatter(train_x[2:], eta[i][2:], label=layers[i])
+    plt.legend()
+    plt.xlabel('Steps')
+    plt.yscale('log')
+
+    fig_desc = 'eta'
+    plt.savefig("./figs/{}_{}.pdf".format(pic_name, fig_desc))
+    print("https://users.cs.duke.edu/~rw186/figs/{}_{}.pdf".format(pic_name, fig_desc))
     

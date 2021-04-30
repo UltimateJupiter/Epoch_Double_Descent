@@ -19,7 +19,7 @@ out_dim = 1
 
 hidden_dim = 250
 n_samples = 50
-n_epoch = 100
+n_epoch = 20
 seed = 12
 
 if seed is not None:
