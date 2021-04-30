@@ -5,6 +5,7 @@
 # ignore all images
 **/*.png
 **/*.jpg
+**/*.pdf
 
 # ignore all compressed files
 **/*.iso
